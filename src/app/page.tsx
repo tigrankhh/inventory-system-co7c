@@ -1,130 +1,133 @@
 'use client';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/libsupabase';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
-import { useEffect, useState, useMemo } from 'react';
-import { supabase } from '../../libsupabase';
-import { QRCodeSVG } from 'qrcode.react';
+export default function AssetOSPro() {
+  const [assets, setAssets] = useState([]);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [currency, setCurrency] = useState('USD');
+  const rates = { USD: 1, EUR: 0.92, RUB: 91.5 };
 
-const MODELS = [
-  { id: 'mbp', name: 'MacBook Pro', brand: 'Apple', icon: '💻' },
-  { id: 'iphone', name: 'iPhone 15', brand: 'Apple', icon: '📱' },
-  { id: 'ipad', name: 'iPad Pro', brand: 'Apple', icon: '🖊️' },
-  { id: 'watch', name: 'Apple Watch', brand: 'Apple', icon: '⌚' },
-  { id: 'sony', name: 'Sony Camera', brand: 'Sony', icon: '📷' },
-];
+  useEffect(() => {
+    fetchAssets();
+  }, []);
 
-const CURRENCIES = [
-  { code: 'USD', symbol: '$', rate: 1 },
-  { code: 'EUR', symbol: '€', rate: 0.92 },
-  { code: 'RUB', symbol: '₽', rate: 91.5 },
-];
-
-export default function AssetOSZen() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [currency, setCurrency] = useState(CURRENCIES[0]);
-  const [selectedModel, setSelectedModel] = useState(MODELS[0]);
-  
-  // FORM
-  const [person, setPerson] = useState('');
-  const [price, setPrice] = useState('');
-  const [maint, setMaint] = useState('');
-
-  useEffect(() => { fetchLogs(); }, []);
-
-  const fetchLogs = async () => {
+  async function fetchAssets() {
     const { data } = await supabase.from('assets').select('*').order('created_at', { ascending: false });
-    setLogs(data || []);
-  };
+    if (data) setAssets(data);
+  }
 
-  const handleAdd = async (e: any) => {
-    e.preventDefault();
-    if (!person) return;
-    const sku = `PRO-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-    const meta = `${person}|${selectedModel.name}|${price || '0'}|Excellent|${maint || '0'}`;
-    await supabase.from('assets').insert([{ name: meta, sku }]);
-    setPerson(''); setPrice(''); setMaint(''); fetchLogs();
-  };
+  // Функция загрузки фото
+  async function uploadImage(e, assetId) {
+    const file = e.target.files[0];
+    const filePath = `assets/${assetId}-${Date.now()}`;
+    
+    const { error: uploadError } = await supabase.storage.from('assets').upload(filePath, file);
+    if (!uploadError) {
+      const { data } = supabase.storage.from('assets').getPublicUrl(filePath);
+      await supabase.from('assets').update({ image_url: data.publicUrl }).eq('id', assetId);
+      fetchAssets();
+    }
+  }
 
-  const totals = useMemo(() => {
-    let sum = 0;
-    logs.forEach(l => {
-      const [_, __, pr, ___, mt] = (l.name || '0|0|0|0|0').split('|');
-      sum += (parseFloat(pr) || 0) - (parseFloat(mt) || 0);
-    });
-    return sum;
-  }, [logs]);
+  // Логика QR-сканера
+  useEffect(() => {
+    if (isScannerOpen) {
+      const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+      scanner.render((decodedText) => {
+        alert(`Found Asset: ${decodedText}`); // Здесь можно сделать фильтрацию списка
+        scanner.clear();
+        setIsScannerOpen(false);
+      }, (error) => { console.warn(error); });
+      return () => scanner.clear();
+    }
+  }, [isScannerOpen]);
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-[#1a1a1a] font-sans selection:bg-black selection:text-white">
-      
-      {/* 🧭 NAVIGATION */}
-      <nav className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 flex items-center justify-between px-12">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-black rounded-lg" />
-          <span className="font-bold tracking-tighter text-xl">AssetOS.</span>
-        </div>
-        <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
-          {CURRENCIES.map(c => (
-            <button key={c.code} onClick={() => setCurrency(c)} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${currency.code === c.code ? 'bg-white shadow-sm' : 'text-gray-400'}`}>{c.code}</button>
-          ))}
+    <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-zinc-100 transition-all">
+      {/* Header */}
+      <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-black/70 border-b border-zinc-200 dark:border-zinc-800 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold tracking-tighter">ZEN.ASSET<span className="text-blue-500">OS</span></h1>
+          <div className="flex gap-4 items-center">
+            <select 
+              onChange={(e) => setCurrency(e.target.value)}
+              className="bg-zinc-100 dark:bg-zinc-900 border-none rounded-lg px-3 py-1 text-sm focus:ring-2 ring-blue-500"
+            >
+              <option value="USD">USD $</option>
+              <option value="EUR">EUR €</option>
+              <option value="RUB">RUB ₽</option>
+            </select>
+          </div>
         </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto py-20 px-6">
-        
-        {/* 💰 CLEAN SUMMARY */}
-        <div className="text-center mb-24">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300 mb-2">Current Portfolio Value</p>
-          <h1 className={`text-8xl font-black tracking-tighter ${totals < 0 ? 'text-red-500' : 'text-black'}`}>
-            {currency.symbol}{Math.abs(totals * currency.rate).toLocaleString()}
-          </h1>
-        </div>
+      <main className="max-w-7xl mx-auto p-6">
+        {/* QR Scanner Section */}
+        {isScannerOpen && (
+          <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-4">
+            <div id="reader" className="w-full max-w-md overflow-hidden rounded-3xl"></div>
+            <button onClick={() => setIsScannerOpen(false)} className="mt-8 px-8 py-3 bg-white text-black rounded-full font-bold">Close Scanner</button>
+          </div>
+        )}
 
-        {/* 🏎️ THE SLIDER */}
-        <div className="mb-16">
-          <p className="text-center text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-6">Select Gadget Type</p>
-          <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar">
-            {MODELS.map(m => (
-              <div 
-                key={m.id} 
-                onClick={() => setSelectedModel(m)}
-                className={`flex-none w-40 p-6 rounded-[32px] border-2 transition-all cursor-pointer ${selectedModel.id === m.id ? 'border-black bg-white shadow-xl' : 'border-transparent bg-gray-50 opacity-40 hover:opacity-100'}`}
-              >
-                <div className="text-3xl mb-4">{m.icon}</div>
-                <div className="font-bold text-sm tracking-tight">{m.name}</div>
-              </div>
-            ))}
+        {/* Stats Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+            <p className="text-zinc-500 text-xs uppercase tracking-widest mb-1">Total Assets</p>
+            <p className="text-2xl font-bold">{assets.length}</p>
+          </div>
+          <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+            <p className="text-zinc-500 text-xs uppercase tracking-widest mb-1">Total Value</p>
+            <p className="text-2xl font-bold">
+              {(assets.reduce((acc, curr) => acc + curr.price, 0) * rates[currency]).toLocaleString()} {currency}
+            </p>
           </div>
         </div>
 
-        {/* ✍️ SIMPLE FORM */}
-        <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-32 bg-white p-4 rounded-[40px] shadow-2xl shadow-gray-200/50">
-          <input value={person} onChange={e => setPerson(e.target.value)} placeholder="Who owns it?" className="bg-gray-50 p-6 rounded-[30px] outline-none text-sm font-medium focus:bg-gray-100 transition-all col-span-1 md:col-span-1" />
-          <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="Price ($)" className="bg-gray-50 p-6 rounded-[30px] outline-none text-sm font-medium focus:bg-gray-100 transition-all" />
-          <input type="number" value={maint} onChange={e => setMaint(e.target.value)} placeholder="Repair ($)" className="bg-gray-50 p-6 rounded-[30px] outline-none text-sm font-medium focus:bg-gray-100 transition-all" />
-          <button className="bg-black text-white rounded-[30px] font-bold text-sm hover:scale-[0.98] transition-transform">Add Asset</button>
-        </form>
-
-        {/* 📜 LIST */}
-        <div className="space-y-4">
-          <h3 className="text-[10px] font-black text-gray-300 uppercase tracking-widest ml-6 mb-8">Recent Registry</h3>
-          {logs.map(log => {
-            const [p, it, pr, _, mt] = (log.name || '0|0|0|0|0').split('|');
-            const net = (parseFloat(pr) || 0) - (parseFloat(mt) || 0);
-            return (
-              <div key={log.id} className="bg-white border border-gray-100 p-8 rounded-[40px] flex items-center justify-between group hover:shadow-lg transition-all">
-                <div className="flex items-center gap-8">
-                  <div className="p-2 bg-gray-50 rounded-2xl grayscale group-hover:grayscale-0 transition-all"><QRCodeSVG value={log.sku} size={40} /></div>
-                  <div>
-                    <h4 className="font-bold text-xl tracking-tight">{it}</h4>
-                    <p className="text-xs text-gray-400 font-medium">{p} • <span className={net < 0 ? 'text-red-500' : 'text-green-500'}>{currency.symbol}{(net * currency.rate).toLocaleString()}</span></p>
+        {/* Assets Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {assets.map((asset) => (
+            <div key={asset.id} className="group relative bg-zinc-50 dark:bg-zinc-900 rounded-[2.5rem] p-4 border border-zinc-100 dark:border-zinc-800 hover:border-blue-500 transition-all duration-300">
+              <div className="aspect-square mb-4 overflow-hidden rounded-[2rem] bg-zinc-200 dark:bg-zinc-800 relative">
+                {asset.image_url ? (
+                  <img src={asset.image_url} alt={asset.name} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                ) : (
+                  <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
+                    <span className="text-3xl mb-2">📸</span>
+                    <span className="text-[10px] uppercase font-bold tracking-widest">Add Photo</span>
+                    <input type="file" className="hidden" onChange={(e) => uploadImage(e, asset.id)} />
+                  </label>
+                )}
+                <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md text-white text-[10px] px-3 py-1 rounded-full uppercase font-black">
+                  {asset.category}
+                </div>
+              </div>
+              
+              <div className="px-2">
+                <h3 className="text-lg font-bold leading-tight mb-1 truncate">{asset.name}</h3>
+                <div className="flex justify-between items-center">
+                  <p className="text-2xl font-black text-blue-500">
+                    {(asset.price * rates[currency]).toLocaleString()} <span className="text-sm font-medium">{currency}</span>
+                  </p>
+                  <div className="w-8 h-8 bg-white dark:bg-black rounded-full flex items-center justify-center border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                    📦
                   </div>
                 </div>
-                <div className="text-[10px] font-mono text-gray-200 uppercase">{log.sku}</div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </main>
+
+      {/* Floating Action Button (QR) */}
+      <button 
+        onClick={() => setIsScannerOpen(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-blue-600 text-white rounded-full shadow-[0_20px_50px_rgba(37,99,235,0.4)] flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all z-40"
+      >
+        📱
+      </button>
     </div>
   );
 }
