@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-// Если файл libsupabase.ts лежит в папке src, а этот файл в src/app/
-// то путь должен быть именно таким:
-import { supabase } from '../libsupabase'; 
+import { createClient } from '@supabase/supabase-js';
 import { 
   Plus, 
   Search, 
@@ -17,6 +15,11 @@ import {
   RefreshCcw,
   LayoutDashboard
 } from 'lucide-react';
+
+// Инициализация Supabase напрямую из переменных окружения Vercel
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function InventorySystem() {
   const [items, setItems] = useState([]);
@@ -46,7 +49,7 @@ export default function InventorySystem() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans antialiased">
-      {/* Header */}
+      {/* --- NAVIGATION --- */}
       <nav className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -69,29 +72,29 @@ export default function InventorySystem() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats Row */}
+        {/* --- DASHBOARD STATS --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-2xl">
+          <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-2xl backdrop-blur-sm">
             <p className="text-gray-400 text-sm font-medium mb-1">Total Assets</p>
             <h3 className="text-3xl font-bold">{items.length}</h3>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-2xl">
-            <p className="text-gray-400 text-sm font-medium mb-1">Categories</p>
-            <h3 className="text-3xl font-bold text-blue-400">8</h3>
-          </div>
-          <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-2xl">
+          <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-2xl backdrop-blur-sm">
             <p className="text-gray-400 text-sm font-medium mb-1">System Status</p>
             <h3 className="text-3xl font-bold text-green-400 font-mono">ONLINE</h3>
           </div>
+          <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-2xl backdrop-blur-sm">
+            <p className="text-gray-400 text-sm font-medium mb-1">Last Update</p>
+            <h3 className="text-xl font-bold text-blue-400">Just Now</h3>
+          </div>
         </div>
 
-        {/* Search & Actions */}
+        {/* --- SEARCH & QUICK ACTIONS --- */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
             <input 
               type="text" 
-              placeholder="Search assets by name or ID..."
+              placeholder="Search assets by name or serial..."
               className="w-full bg-gray-800/50 border border-gray-700 rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-gray-600"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -100,7 +103,7 @@ export default function InventorySystem() {
           <div className="flex gap-2">
             <button className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-900/20">
               <Plus className="w-5 h-5" />
-              Add Asset
+              Add Item
             </button>
             <button className="bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-xl border border-gray-700 transition-all">
               <QrCode className="w-6 h-6" />
@@ -108,41 +111,49 @@ export default function InventorySystem() {
           </div>
         </div>
 
-        {/* Main List */}
-        <div className="bg-gray-800/30 border border-gray-800 rounded-3xl overflow-hidden backdrop-blur-sm">
+        {/* --- ASSETS LIST --- */}
+        <div className="bg-gray-800/30 border border-gray-800 rounded-3xl overflow-hidden backdrop-blur-sm shadow-2xl">
           {loading ? (
-            <div className="p-12 text-center">
+            <div className="p-20 text-center">
               <div className="inline-block animate-spin mb-4 text-blue-500">
-                <RefreshCcw className="w-8 h-8" />
+                <RefreshCcw className="w-10 h-10" />
               </div>
-              <p className="text-gray-400">Synchronizing database...</p>
+              <p className="text-gray-400 font-medium">Connecting to Supabase...</p>
             </div>
           ) : items.length === 0 ? (
-            <div className="p-12 text-center">
-              <Package className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-1">No items found</h3>
-              <p className="text-gray-500">Add your first asset to get started.</p>
+            <div className="p-20 text-center">
+              <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-700">
+                <Package className="w-10 h-10 text-gray-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Inventory is Empty</h3>
+              <p className="text-gray-500 max-w-xs mx-auto">Start by adding your first asset to the database.</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-800">
               {items
                 .filter(i => i.name.toLowerCase().includes(searchQuery.toLowerCase()))
                 .map((item) => (
-                <div key={item.id} className="p-4 hover:bg-gray-700/30 transition-colors group cursor-pointer">
+                <div key={item.id} className="p-5 hover:bg-gray-700/40 transition-all group cursor-pointer border-l-4 border-transparent hover:border-blue-500">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-700 group-hover:border-blue-500/50 transition-colors">
+                    <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-700 group-hover:bg-gray-900 transition-colors">
                       <Package className="w-7 h-7 text-gray-400 group-hover:text-blue-400" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-100 group-hover:text-white">{item.name}</h4>
-                      <p className="text-sm text-gray-500 font-mono tracking-tighter uppercase">{item.id?.slice(0, 8) || 'No ID'}</p>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-gray-100 group-hover:text-white">{item.name}</h4>
+                        <span className="text-[10px] bg-gray-700 text-gray-400 px-2 py-0.5 rounded uppercase font-mono tracking-tighter">
+                          {item.id?.slice(0, 8)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-0.5">{item.category || 'General'}</p>
                     </div>
-                    <div className="text-right mr-4">
-                      <span className="inline-block px-3 py-1 bg-green-900/30 text-green-400 text-xs font-bold rounded-full border border-green-800/50">
-                        In Stock
+                    <div className="hidden sm:block text-right mr-6">
+                      <p className="text-xs text-gray-500 uppercase font-bold mb-1">Status</p>
+                      <span className="inline-block px-3 py-1 bg-green-900/20 text-green-400 text-[10px] font-black rounded-full border border-green-800/30 uppercase tracking-widest">
+                        Available
                       </span>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-400 group-hover:translate-x-1 transition-all" />
+                    <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
               ))}
@@ -151,14 +162,16 @@ export default function InventorySystem() {
         </div>
       </main>
 
-      {/* Mobile Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 via-gray-900 to-transparent md:hidden">
-        <div className="bg-gray-800/90 backdrop-blur-2xl border border-gray-700 rounded-2xl p-2 flex justify-around items-center shadow-2xl">
+      {/* --- MOBILE NAV BAR --- */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md md:hidden z-[100]">
+        <div className="bg-gray-800/90 backdrop-blur-2xl border border-gray-700/50 rounded-2xl p-2 flex justify-around items-center shadow-2xl shadow-black">
           <button className="p-3 text-blue-500"><LayoutDashboard className="w-6 h-6" /></button>
           <button className="p-3 text-gray-500"><Search className="w-6 h-6" /></button>
-          <button className="p-4 bg-blue-600 rounded-xl -translate-y-4 shadow-xl shadow-blue-900/40 active:scale-90 transition-transform text-white">
-            <Plus className="w-7 h-7" />
-          </button>
+          <div className="relative -translate-y-6">
+            <button className="p-5 bg-blue-600 rounded-2xl shadow-xl shadow-blue-900/40 active:scale-90 transition-transform text-white border-4 border-gray-900">
+              <Plus className="w-8 h-8" />
+            </button>
+          </div>
           <button className="p-3 text-gray-500"><Camera className="w-6 h-6" /></button>
           <button className="p-3 text-gray-500"><Settings className="w-6 h-6" /></button>
         </div>
