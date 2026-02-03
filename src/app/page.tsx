@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from './libsupabase';
+import { supabase } from '@/app/libsupabase';
 export default function AssetOS() {
   const [logs, setLogs] = useState<any[]>([]);
   const [currency, setCurrency] = useState({ code: 'USD', symbol: '$', rate: 1 });
