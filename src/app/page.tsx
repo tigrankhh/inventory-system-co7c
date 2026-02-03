@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '../libsupabase'; // ПРОВЕРЬ: здесь должно быть ДВЕ точки
+import { supabase } from './libsupabase';
 
 export default function AssetOS() {
   const [logs, setLogs] = useState<any[]>([]);
