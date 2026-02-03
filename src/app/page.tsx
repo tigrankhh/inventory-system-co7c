@@ -1,128 +1,137 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/libsupabase';
-import { QrCode, History, Package, User, Search, ArrowLeft, Loader2, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { QrCode, LayoutDashboard, Package, LogOut, Search, AlertCircle, Clock } from 'lucide-react';
 
-export default function InventoryApp() {
-  const [session, setSession] = useState<any>(null);
-  const [view, setView] = useState<'dashboard' | 'assets' | 'history'>('dashboard');
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any[]>([]);
-  
-  // Состояния для формы логина
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
+export default function InventorySystem() {
+  const [currentTab, setCurrentTab] = useState('dashboard');
+  const [isLogged, setIsLogged] = useState(false);
 
-  // 1. Проверка авторизации при загрузке
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
+  // Demo Data
+  const inventory = [
+    { sku: 'MB-14-001', name: 'MacBook Pro 14"', cat: 'Laptops', qty: 12, status: 'In Stock' },
+    { sku: 'LOGI-MX-2', name: 'Logitech MX 3S', cat: 'Peripherals', qty: 2, status: 'Low Stock' },
+    { sku: 'DELL-27-05', name: 'Dell 27" Monitor', cat: 'Monitors', qty: 0, status: 'Out of Stock' },
+  ];
 
-  // 2. Функции входа/выхода
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = isRegister 
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password });
-    
-    if (error) alert(error.message);
-    else if (isRegister) alert('Check your email!');
-    setLoading(false);
-  };
-
-  const handleSignOut = () => supabase.auth.signOut();
-
-  // 3. Загрузка данных из БД
-  const fetchData = async (table: string) => {
-    setLoading(true);
-    const { data: result, error } = await supabase.from(table).select('*');
-    if (error) console.error(error);
-    else setData(result || []);
-    setLoading(false);
-  };
-
-  // --- ЭКРАН ЛОГИНА ---
-  if (!session) {
+  if (!isLogged) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl">
-          <h2 className="text-3xl font-black text-slate-800 text-center mb-2">
-            {isRegister ? 'Join Us' : 'Magical Inv'}
-          </h2>
-          <p className="text-slate-400 text-center mb-8 text-sm">Please {isRegister ? 'register' : 'sign in'} to continue</p>
-          <form onSubmit={handleAuth} className="space-y-4">
-            <input type="email" placeholder="Email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-500" value={email} onChange={e => setEmail(e.target.value)} required />
-            <input type="password" placeholder="Password" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-500" value={password} onChange={e => setPassword(e.target.value)} required />
-            <button className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all flex justify-center">
-              {loading ? <Loader2 className="animate-spin" /> : (isRegister ? 'Create Account' : 'Sign In')}
-            </button>
-          </form>
-          <button onClick={() => setIsRegister(!isRegister)} className="w-full text-center mt-6 text-sm font-semibold text-blue-600">
-            {isRegister ? 'Already have an account? Log in' : 'New here? Register'}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // --- ЭКРАН СПИСКОВ (Assets/History) ---
-  if (view !== 'dashboard') {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <header className="bg-white p-4 shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setView('dashboard')} className="p-2 hover:bg-slate-100 rounded-full"><ArrowLeft size={24} /></button>
-            <h1 className="text-xl font-bold capitalize">{view}</h1>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 font-sans">
+        <div className="bg-white p-10 rounded-lg shadow-sm border border-slate-200 w-full max-w-sm">
+          <div className="mb-8 text-center">
+            <h1 className="text-2xl font-bold text-slate-800">Inventory Login</h1>
+            <p className="text-slate-500 text-sm">Enter credentials to access stock</p>
           </div>
-        </header>
-        <main className="p-4 space-y-3">
-          {loading ? <Loader2 className="animate-spin mx-auto mt-10 text-blue-600" /> : 
-            data.map((item: any) => (
-              <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <p className="font-bold">{item.name || item.gadget_name}</p>
-                <p className="text-sm text-slate-500">{item.status || item.action_date}</p>
-              </div>
-            ))
-          }
-        </main>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase">Email Address</label>
+              <input type="email" defaultValue="admin@system.com" className="w-full border border-slate-300 p-3 rounded outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase">Password</label>
+              <input type="password" defaultValue="••••••••" className="w-full border border-slate-300 p-3 rounded outline-none focus:border-blue-500" />
+            </div>
+            <button onClick={() => setIsLogged(true)} className="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700 transition">Sign In</button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // --- ГЛАВНЫЙ ЭКРАН (Dashboard) ---
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white px-6 py-5 shadow-sm flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-black text-blue-600">MAGICAL INV</h1>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Active: {session.user.email}</p>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+      {/* Sidebar / Nav */}
+      <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+        <div className="flex items-center gap-8">
+          <span className="font-bold text-lg tracking-tight border-r pr-8 border-slate-200">INV_SYSTEM</span>
+          <div className="flex gap-6">
+            <button onClick={() => setCurrentTab('dashboard')} className={`text-sm font-medium ${currentTab === 'dashboard' ? 'text-blue-600' : 'text-slate-500'}`}>Dashboard</button>
+            <button onClick={() => setCurrentTab('inventory')} className={`text-sm font-medium ${currentTab === 'inventory' ? 'text-blue-600' : 'text-slate-500'}`}>Stock List</button>
+          </div>
         </div>
-        <button onClick={handleSignOut} className="p-2 text-slate-400 hover:text-red-500 transition"><LogOut size={20} /></button>
-      </header>
-
-      <main className="p-6 space-y-6 flex-1">
-        <button onClick={() => alert('QR Scanner coming next!')} className="w-full bg-blue-600 text-white rounded-3xl p-8 shadow-xl flex items-center justify-between">
-          <div className="text-left"><span className="text-xl font-bold block">Scan QR Code</span><p className="text-blue-100 text-xs">Instantly check device</p></div>
-          <div className="bg-white/20 p-4 rounded-2xl"><QrCode size={32} /></div>
+        <button onClick={() => setIsLogged(false)} className="flex items-center gap-2 text-sm text-slate-500 hover:text-red-600">
+          <LogOut size={16} /> Logout
         </button>
+      </nav>
 
-        <div className="grid grid-cols-2 gap-4">
-          <button onClick={() => { setView('assets'); fetchData('gadgets'); }} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-3">
-            <div className="text-orange-500 bg-orange-50 w-fit p-3 rounded-2xl"><Package size={24} /></div>
-            <span className="font-bold text-slate-700">Assets</span>
-          </button>
-          <button onClick={() => { setView('history'); fetchData('history'); }} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-3">
-            <div className="text-purple-500 bg-purple-50 w-fit p-3 rounded-2xl"><History size={24} /></div>
-            <span className="font-bold text-slate-700">History</span>
-          </button>
-        </div>
+      <main className="p-8 max-w-6xl mx-auto w-full">
+        {currentTab === 'dashboard' ? (
+          <div className="space-y-8">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded border border-slate-200 shadow-sm">
+                <p className="text-xs font-bold text-slate-400 uppercase">Total Items</p>
+                <p className="text-3xl font-bold">1,240</p>
+              </div>
+              <div className="bg-white p-6 rounded border border-slate-200 shadow-sm">
+                <p className="text-xs font-bold text-slate-400 uppercase">Low Stock</p>
+                <p className="text-3xl font-bold text-orange-500">12</p>
+              </div>
+              <div className="bg-white p-6 rounded border border-slate-200 shadow-sm">
+                <p className="text-xs font-bold text-slate-400 uppercase">Out of Stock</p>
+                <p className="text-3xl font-bold text-red-500">3</p>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex justify-center">
+              <button className="bg-blue-600 text-white px-12 py-6 rounded-xl shadow-lg hover:bg-blue-700 transition flex flex-col items-center gap-2">
+                <QrCode size={48} />
+                <span className="font-bold text-lg">SCAN ASSET QR</span>
+              </button>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white rounded border border-slate-200 shadow-sm">
+              <div className="p-4 border-b border-slate-100 flex items-center gap-2 font-bold text-slate-700">
+                <Clock size={18} /> Recent Activity
+              </div>
+              <div className="p-4 space-y-4 text-sm">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <span>John Doe checked out **MacBook 14"**</span>
+                  <span className="text-slate-400">10m ago</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>New stock added to **Logitech MX Mouse**</span>
+                  <span className="text-slate-400">1h ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+             <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between">
+                <div className="relative w-72">
+                  <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
+                  <input type="text" placeholder="Search SKU or Name..." className="pl-10 pr-4 py-2 w-full border border-slate-300 rounded text-sm" />
+                </div>
+             </div>
+             <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
+                  <tr>
+                    <th className="px-6 py-4">SKU</th>
+                    <th className="px-6 py-4">Product Name</th>
+                    <th className="px-6 py-4">Stock</th>
+                    <th className="px-6 py-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {inventory.map(item => (
+                    <tr key={item.sku} className="hover:bg-slate-50">
+                      <td className="px-6 py-4 font-mono text-slate-500">{item.sku}</td>
+                      <td className="px-6 py-4 font-bold">{item.name}</td>
+                      <td className="px-6 py-4">{item.qty}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                          item.status === 'In Stock' ? 'bg-green-100 text-green-700' : 
+                          item.status === 'Low Stock' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
+                        }`}>{item.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+             </table>
+          </div>
+        )}
       </main>
     </div>
   );
