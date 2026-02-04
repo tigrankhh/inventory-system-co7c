@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 'use client'
 import { QRCodeSVG } from 'qrcode.react'
 import { useParams } from 'next/navigation'
