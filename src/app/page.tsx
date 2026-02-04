@@ -1,4 +1,4 @@
-
+export const runtime = 'edge';
 iexport const runtime = 'edge';port { createClient } from '@/lib/supabaseServer'
 import { redirect } from 'next/navigation'
 import { Plus, Search, Filter, PackageOpen, Edit2, Trash2, QrCode } from 'lucide-react'
