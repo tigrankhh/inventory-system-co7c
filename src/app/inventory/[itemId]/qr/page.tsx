@@ -1,31 +1,35 @@
 export const runtime = 'edge';
-'use client'
-import { QRCodeSVG } from 'qrcode.react'
-import { useParams } from 'next/navigation'
+
+import { createClient } from '@/lib/supabaseServer'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
-export default function QRPreviewPage() {
-  const { itemId } = useParams()
-  const publicUrl = `${window.location.origin}/qr/${itemId}`
+export default async function QRPage({ params }: { params: Promise<{ itemId: string }> }) {
+  const { itemId } = await params
+  const supabase = await createClient()
+  const { data: item } = await supabase
+    .from('inventory_items')
+    .select('*')
+    .eq('id', itemId)
+    .single()
+
+  if (!item) redirect('/')
+
+  const qrValue = `https://inventory-app.pages.dev/qr/${itemId}`
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-      <div className="bg-white p-10 rounded-[3rem] shadow-2xl text-center max-w-sm w-full">
-        <Link href="/inventory" className="flex items-center gap-2 text-slate-400 font-bold mb-8 hover:text-blue-600">
-          <ArrowLeft size={18} /> BACK
-        </Link>
-        <div className="bg-slate-50 p-8 rounded-[2rem] inline-block mb-6">
-          <QRCodeSVG value={publicUrl} size={200} />
+    <div className="max-w-md mx-auto p-8 text-center">
+      <Link href="/" className="flex items-center gap-2 text-slate-500 mb-8 hover:text-blue-600">
+        <ArrowLeft size={20} /> Back to inventory
+      </Link>
+      <div className="bg-white border-4 border-black p-8 rounded-[3rem] shadow-[10px_10px_0px_0px_rgba(37,99,235,1)]">
+        <h2 className="text-2xl font-black uppercase mb-4">{item.name}</h2>
+        <div className="aspect-square bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+          {/* Здесь будет QR код на фронтенде */}
+          <p className="text-xs text-slate-400 font-mono break-all p-4">{qrValue}</p>
         </div>
-        <h2 className="text-2xl font-black mb-2 uppercase italic tracking-tighter">QR Asset Label</h2>
-        <p className="text-slate-400 text-sm font-medium mb-6 break-all">{publicUrl}</p>
-        <button 
-          onClick={() => window.print()}
-          className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg"
-        >
-          PRINT LABEL
-        </button>
+        <p className="font-bold text-blue-600">SCAN TO VIEW ITEM</p>
       </div>
     </div>
   )
