@@ -1,8 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export const createClient = () => {
-  const cookieStore = cookies()
+export async function createClient() {
+  const cookieStore = await cookies() // Вот здесь магия await
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,14 +16,14 @@ export const createClient = () => {
           try {
             cookieStore.set({ name, value, ...options })
           } catch (error) {
-            // Это нормально для Server Components, если куки меняются в Middleware
+            // Это нормально для Server Components
           }
         },
         remove(name: string, options: any) {
           try {
             cookieStore.set({ name, value: '', ...options })
           } catch (error) {
-            // Обработка удаления кук
+            // Это нормально для Server Components
           }
         },
       },
