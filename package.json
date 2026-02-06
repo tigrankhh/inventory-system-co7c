@@ -2,11 +2,13 @@
   "name": "inventory-system",
   "version": "3.0.9",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+ "scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint",
+  "pages:build": "npx @cloudflare/next-on-pages"
+}
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "latest",
