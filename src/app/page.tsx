@@ -1,7 +1,11 @@
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 import { createClient } from '@/lib/supabaseServer';
 import { Suspense } from 'react';
 
-export const runtime = 'edge';
+
+
 
 // ℹ️ Функция получения данных с расширенным логированием
 async function getInventoryData() {
