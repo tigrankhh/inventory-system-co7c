@@ -1,8 +1,9 @@
-import "./globals.css";
+import './globals.css';
+import type { Metadata } from 'next';
 
-export const metadata = {
-  title: "Inventory System Pro",
-  description: "Modern Asset Management",
+export const metadata: Metadata = {
+  title: 'Inventory App',
+  description: 'Globaaal Network Brrrooo',
 };
 
 export default function RootLayout({
@@ -12,9 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased font-sans bg-gray-900 text-white">
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
