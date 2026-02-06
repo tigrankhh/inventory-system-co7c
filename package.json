@@ -19,12 +19,14 @@
     "clsx": "latest",
     "tailwind-merge": "latest"
   },
-  "devDependencies": {
+ "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "postcss": "^8.0.0",
-    "tailwindcss": "^3.4.0",
+    "autoprefixer": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
     "typescript": "^5.0.0"
+  }
   }
 }
