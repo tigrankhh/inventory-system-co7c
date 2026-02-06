@@ -1,6 +1,6 @@
 {
   "name": "inventory-system",
-  "version": "3.0.5",
+  "version": "3.0.6",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,6 +11,7 @@
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "latest",
     "@supabase/supabase-js": "latest",
+    "@supabase/ssr": "latest",
     "next": "15.1.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
