@@ -1,1 +1,6 @@
+name = "inventory-app"
+compatibility_date = "2026-02-04"
 compatibility_flags = [ "nodejs_compat" ]
+
+[vars]
+# Здесь можно хранить публичные переменные, если нужно
