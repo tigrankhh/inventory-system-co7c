@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
@@ -85,3 +86,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
