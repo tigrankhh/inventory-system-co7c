@@ -1,18 +1,21 @@
 export const runtime = 'edge';
 
 export default function Home() {
-  return (
-    <main style={{ backgroundColor: 'black', color: 'white', minHeight: 'screen', padding: '2rem' }}>
-      <h1 style={{ fontStyle: 'italic', fontWeight: '900' }}>
-        GLOBAAAL NETWORK <span style={{ color: '#22c55e' }}>BRRROOO</span>
-      </h1>
-      <div style={{ marginTop: '2rem', padding: '1rem', border: '1px solid #22c55e', borderRadius: '0.5rem' }}>
-        <p>🚀 System is LIVE.</p>
-        <p>Если ты видишь это, 404 ПОБЕЖДЕНА!</p>
-      </div>
-      <div style={{ marginTop: '1rem', color: '#666' }}>
-        Проверяем подключение к базе...
-      </div>
-    </main>
-  );
+  console.log(">>> [DEBUG] Globaaal Network Worker Started");
+  console.log(">>> [DEBUG] Environment URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "EXISTS" : "MISSING");
+
+  try {
+    return (
+      <main style={{ backgroundColor: 'black', color: 'white', minHeight: '100vh', padding: '2rem' }}>
+        <h1 style={{ fontStyle: 'italic', fontWeight: '900' }}>
+          DEBUG MODE: <span style={{ color: '#22c55e' }}>ON</span>
+        </h1>
+        <p>Если ты видишь этот текст, значит 404 побеждена.</p>
+        <p>Время сервера: {new Date().toISOString()}</p>
+      </main>
+    );
+  } catch (e: any) {
+    console.error(">>> [ERROR] Render failed:", e.message);
+    return <div style={{ color: 'red' }}>Error: {e.message}</div>;
+  }
 }
